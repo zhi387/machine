@@ -2,6 +2,8 @@
 
 import similardatas
 import similar
-from similar import similarDinstance
-a = similar.rankingSample(similardatas.languagevalus, 'u1',similarity=similarDinstance)
-print a
+a = similardatas.languagevalus
+b = similar.getRecommendationsInAll(a, 'u2')
+c = similar.getRecommendationsInCache(a, similar.calculateSample(a), 'u2')
+print b
+print c
