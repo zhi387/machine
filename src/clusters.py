@@ -2,6 +2,7 @@
 from math import sqrt
 import Image
 import ImageDraw
+import random
 #pearson 紧密度
 def pearson(v1,v2):
     #求和
@@ -28,7 +29,7 @@ class cluster:
         self.cid = cid
         self.distance = distance
 
-def hculster(rows,distance=pearson):
+def hCluster(rows,distance=pearson):
     distances = {}
     currentclustid = -1
     #初始化
@@ -117,4 +118,83 @@ def drawNode(draw,clust,x,y,scaling,labels):
         drawNode(draw,clust.right,x+l1,bottom-h2/2,scaling,labels)
     else:
         draw.text((x+5,y-7),labels[clust.cid],(0,0,0,))
-    
+
+def kCluster(rows,distance=pearson,k=4):
+    #每个点的最大最小值
+    ranges=[(min([row[i] for row in rows]),max([row[i] for row in rows])) for i in range(len(rows[0]))]
+    #随机创建k个中心点
+    clusters=[[random.random()*(ranges[i][1]-ranges[i][0])+ranges[i][0] for i in range(len(rows[0]))] for j in range(k)]
+    lastmatches = None
+    for t in range(100):
+        print 'Iteration %d' % t
+        bestmatches=[[] for i in range(k)]
+        #每行找中心点
+        for j in range(len(rows)):
+            row=rows[j]
+            bestmatch=0
+            for i in range(k):
+                d=distance(clusters[i],row)
+                if d<distance(clusters[bestmatch],row):
+                    bestmatch=i
+            bestmatches[bestmatch].append(j)
+        if bestmatches==lastmatches:
+            break
+        lastmatches=bestmatches
+        for i in range(k):
+            avgs=[0.0]*len(rows[0])
+            if len(bestmatches[i])>0:
+                for rowid in bestmatches[i]:
+                    for m in range(len(rows[rowid])):
+                        avgs[m]+=rows[rowid][m]
+                    for j in range(len(avgs)):
+                        avgs[j]/=len(bestmatches[i])
+                    clusters[i]=avgs
+    return bestmatches
+
+def scaleDown(data,distance=pearson,rate=0.01):
+    l=len(data)
+    #真实距离
+    realdist=[[distance(data[i],data[j]) for j in range(l)]for i in range(l)]
+    #随机初始化
+    loc=[[random.random(),random.random()]for i in range(l)]
+    fakedist=[[0.0 for j in range(l)]for i in range(l)]
+    lasterror=None
+    m=1
+    while m < 10000:
+        m+=1
+        #投影后距离
+        for i in range(l):
+            for j in range(l):
+                fakedist[i][j]=sqrt(sum([pow(loc[i][x]-loc[j][x],2)for x in range(len(loc[i]))]))
+        #移动节点
+        grad=[[0.0,0.0]for i in range(l)]
+        totalerror=0
+        for k in range(l):
+            for j in range(l):
+                if realdist[j][k]==0:
+                    continue
+                #目标距离！=实际距离，差值百分比
+                errorterm=(fakedist[j][k]-realdist[j][k])/realdist[j][k]
+                #按比例移动
+                grad[k][0]+=((loc[k][0]-loc[j][0])/fakedist[j][k])*errorterm
+                grad[k][0]+=((loc[k][1]-loc[j][1])/fakedist[j][k])*errorterm
+                totalerror+=abs(errorterm)
+        print totalerror
+        if lasterror and lasterror<totalerror:
+            break
+        lasterror=totalerror
+        #
+        for k in range(l):
+            loc[k][0]-=rate*grad[k][0]
+            loc[k][1]-=rate*grad[k][1]
+    return loc  
+
+def  draw2d(data,labels,jpeg='mds2d.jpg'):
+    img=Image.new('RGB', (800,600), (255,255,255))
+    draw=ImageDraw.Draw(img)
+    for i in range(len(data)):
+        x=(data[i][0]+0.5)*400
+        y=(data[i][1]+0.5)*300
+        draw.text((x,y), labels[i],(0,0,0))
+    img.save(jpeg,'JPEG')
+        
