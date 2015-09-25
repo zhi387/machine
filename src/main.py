@@ -1,7 +1,8 @@
-# -*- coding:UTF-8 -*-
+# -*- coding=utf-8 -*- 
+import searchengine
+from searchengine import crawler
 import datas
-import clusters
-name = [name for name in datas.rows]
-data = [data for data in datas.rows.values()]
-coorclust=clusters.scaleDown(data)
-clusters.draw2d(coorclust, name,jpeg='2d.jpg')
+
+crawler = searchengine.crawler('wikipython.db')
+#crawler.createIndexTables()
+crawler.crawl(datas.pages)
