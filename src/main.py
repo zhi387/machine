@@ -1,8 +1,6 @@
 # -*- coding=utf-8 -*- 
-import searchengine
-from searchengine import crawler
-import datas
-
-crawler = searchengine.crawler('wikipython.db')
-#crawler.createIndexTables()
-crawler.crawl(datas.pages)
+import nn
+mynet=nn.searchnet('nn.db')
+wWorld,wRiver,wBank=101,102,103
+uWorldBank,uRiver,uEarth=201,202,203
+print mynet.getresult([wWorld,wBank], [uWorldBank,uRiver,uEarth])
